@@ -1,0 +1,11 @@
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/preflight.css" layer(base);
+@import "tailwindcss/utilities.css";
+@import "nativewind/theme";
+
+@theme {
+  --color-brand-blue: #176b70;
+  --color-brand-coral: #f47b63;
+  --color-brand-ink: #17343a;
+  --color-brand-mint: #65bfae;
+}
