@@ -12,10 +12,15 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors.brand.coral,
         tabBarInactiveTintColor: Colors.brand.muted,
         tabBarLabelStyle: { fontFamily: 'System', fontSize: 11, fontWeight: '700' },
-        tabBarStyle: { paddingTop: 8, borderTopColor: Colors.brand.line, backgroundColor: Colors.brand.white }
+        tabBarStyle: {
+          paddingTop: 8,
+          borderTopColor: Colors.brand.line,
+          backgroundColor: Colors.brand.white,
+        },
         headerShown: false,
         tabBarButton: HapticTab,
-      }}>
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
