@@ -12,48 +12,11 @@ import {
 
 import { ThemedText } from '@/components/themed-text';
 import { Colors, Fonts } from '@/constants/theme';
-
-type Pet = {
-  id: string;
-  name: string;
-  type: string;
-  detail: string;
-  age: string;
-  weight: string;
-  breed: string;
-  color: string;
-  initials: string;
-};
-
-const initialPets: Pet[] = [
-  {
-    id: 'PC-001',
-    name: 'Luna',
-    type: 'Perra',
-    detail: 'Amorosa y llena de energía',
-    age: '4 años',
-    weight: '18.5 kg',
-    breed: 'Golden retriever',
-    color: Colors.brand.coral,
-    initials: 'LU',
-  },
-  {
-    id: 'PC-002',
-    name: 'Milo',
-    type: 'Gato',
-    detail: 'Curioso, tranquilo y dormilón',
-    age: '2 años',
-    weight: '4.8 kg',
-    breed: 'Gato doméstico',
-    color: Colors.brand.blue,
-    initials: 'MI',
-  },
-];
+import { usePetcare, type Pet } from '@/contexts/petcare-context';
 
 export default function HomeScreen() {
   const { width } = useWindowDimensions();
-  const [pets, setPets] = useState(initialPets);
-  const [selectedPet, setSelectedPet] = useState<Pet>(initialPets[0]);
+  const { pets, selectedPet, setSelectedPet, addPet, updatePet } = usePetcare();
   const [isEditing, setIsEditing] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [isVetOpen, setIsVetOpen] = useState(false);
@@ -73,13 +36,9 @@ export default function HomeScreen() {
     };
 
     if (isAdding) {
-      setPets((currentPets) => [...currentPets, normalizedDraft]);
-      setSelectedPet(normalizedDraft);
+      addPet(normalizedDraft);
     } else {
-      setPets((currentPets) =>
-        currentPets.map((pet) => (pet.id === normalizedDraft.id ? normalizedDraft : pet)),
-      );
-      setSelectedPet(normalizedDraft);
+      updatePet(normalizedDraft);
     }
     setIsEditing(false);
   };
@@ -96,6 +55,7 @@ export default function HomeScreen() {
       breed: 'Sin raza indicada',
       color: pets.length % 2 === 0 ? Colors.brand.coral : Colors.brand.blue,
       initials: '??',
+      visits: [],
     });
     setIsAdding(true);
     setIsEditing(true);
@@ -119,10 +79,10 @@ export default function HomeScreen() {
               Hola, Claudia <ThemedText style={styles.wave}>✦</ThemedText>
             </ThemedText>
           </View>
-          <Pressable accessibilityLabel="Notificaciones" style={styles.iconButton}>
+          <View accessibilityLabel="Notificaciones" accessibilityRole="image" style={styles.iconButton}>
             <MaterialIcons name="notifications-none" size={23} color={Colors.brand.ink} />
             <View style={styles.notificationDot} />
-          </Pressable>
+          </View>
         </View>
 
         <View style={styles.hero}>

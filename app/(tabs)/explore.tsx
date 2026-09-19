@@ -1,16 +1,20 @@
 import { MaterialIcons } from '@expo/vector-icons';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { usePetcare } from '@/contexts/petcare-context';
 import { Colors } from '@/constants/theme';
 
-const visits = [
-  { date: '12 oct', year: '2026', title: 'Revisión general', clinic: 'Clínica Vet Salud', icon: 'medical-services' as const, color: Colors.brand.coral },
-  { date: '04 ago', year: '2026', title: 'Vacuna antirrábica', clinic: 'Clínica Vet Salud', icon: 'vaccines' as const, color: Colors.brand.blue },
-  { date: '18 mar', year: '2026', title: 'Control de peso', clinic: 'Centro Animalia', icon: 'monitor-weight' as const, color: '#65BFAE' },
-];
-
 export default function HistoryScreen() {
+  const { pets, selectedPet, setSelectedPet } = usePetcare();
+  const [selectedYear, setSelectedYear] = useState('2026');
+  const years = ['2026', '2025'];
+  const visits = useMemo(
+    () => selectedPet.visits.filter((visit) => visit.year === selectedYear),
+    [selectedPet.visits, selectedYear],
+  );
+
   return (
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -18,23 +22,47 @@ export default function HistoryScreen() {
         <ThemedText type="title" style={styles.heading}>Historial</ThemedText>
         <ThemedText style={styles.subtitle}>Todo lo importante de tus mascotas, en un solo lugar.</ThemedText>
 
-
-        <View style={styles.nextCard}>
-          <View style={styles.nextIcon}><MaterialIcons name="event" size={23} color={Colors.brand.coral} /></View>
-          <View style={styles.nextCopy}><ThemedText style={styles.nextLabel}>PRÓXIMO EVENTO</ThemedText><ThemedText type="defaultSemiBold" style={styles.nextTitle}>Revisión general</ThemedText><ThemedText style={styles.nextDate}>12 de octubre de 2026 · 10:30</ThemedText></View>
-          <MaterialIcons name="chevron-right" size={22} color={Colors.brand.muted} />
+        <View style={styles.filterRow}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+            {pets.map((pet) => (
+              <Pressable key={pet.id} accessibilityRole="button" onPress={() => setSelectedPet(pet)} style={[styles.filter, selectedPet.id === pet.id && styles.filterActive]}>
+                <ThemedText style={selectedPet.id === pet.id ? styles.filterActiveText : styles.filterText}>{pet.name}</ThemedText>
+                <MaterialIcons name="keyboard-arrow-down" size={17} color={selectedPet.id === pet.id ? Colors.brand.white : Colors.brand.blue} />
+              </Pressable>
+            ))}
+          </ScrollView>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterScroll}>
+            {years.map((year) => (
+              <Pressable key={year} accessibilityRole="button" onPress={() => setSelectedYear(year)} style={[styles.filter, selectedYear === year && styles.filterActive]}>
+                <ThemedText style={selectedYear === year ? styles.filterActiveText : styles.filterText}>{year}</ThemedText>
+                <MaterialIcons name="keyboard-arrow-down" size={17} color={selectedYear === year ? Colors.brand.white : Colors.brand.blue} />
+              </Pressable>
+            ))}
+          </ScrollView>
         </View>
+
+        {visits[0] ? (
+          <View style={styles.nextCard}>
+            <View style={styles.nextIcon}><MaterialIcons name="event" size={23} color={Colors.brand.coral} /></View>
+            <View style={styles.nextCopy}><ThemedText style={styles.nextLabel}>PRÓXIMO EVENTO</ThemedText><ThemedText type="defaultSemiBold" style={styles.nextTitle}>{visits[0].title}</ThemedText><ThemedText style={styles.nextDate}>{visits[0].date} de {selectedYear} · 10:30</ThemedText></View>
+            <MaterialIcons name="chevron-right" size={22} color={Colors.brand.muted} />
+          </View>
+        ) : (
+          <View style={styles.emptyCard}><MaterialIcons name="event-busy" size={23} color={Colors.brand.muted} /><ThemedText style={styles.emptyText}>No hay eventos registrados para {selectedPet.name} en {selectedYear}.</ThemedText></View>
+        )}
 
         <ThemedText type="subtitle" style={styles.sectionTitle}>Actividad reciente</ThemedText>
-        <View style={styles.timeline}>
-          {visits.map((visit, index) => (
-            <View key={visit.title} style={styles.visitRow}>
-              <View style={styles.date}><ThemedText style={styles.dateDay}>{visit.date}</ThemedText><ThemedText style={styles.dateYear}>{visit.year}</ThemedText></View>
-              <View style={styles.lineWrap}><View style={[styles.visitIcon, { backgroundColor: visit.color }]}><MaterialIcons name={visit.icon} size={17} color={Colors.brand.white} /></View>{index < visits.length - 1 && <View style={styles.line} />}</View>
-              <View style={styles.visitCopy}><ThemedText type="defaultSemiBold" style={styles.visitTitle}>{visit.title}</ThemedText><ThemedText style={styles.visitClinic}>{visit.clinic}</ThemedText></View>
-            </View>
-          ))}
-        </View>
+        {visits.length > 0 ? (
+          <View style={styles.timeline}>
+            {visits.map((visit, index) => (
+              <View key={`${visit.title}-${visit.date}`} style={styles.visitRow}>
+                <View style={styles.date}><ThemedText style={styles.dateDay}>{visit.date}</ThemedText><ThemedText style={styles.dateYear}>{visit.year}</ThemedText></View>
+                <View style={styles.lineWrap}><View style={[styles.visitIcon, { backgroundColor: visit.color }]}><MaterialIcons name={visit.icon} size={17} color={Colors.brand.white} /></View>{index < visits.length - 1 && <View style={styles.line} />}</View>
+                <View style={styles.visitCopy}><ThemedText type="defaultSemiBold" style={styles.visitTitle}>{visit.title}</ThemedText><ThemedText style={styles.visitClinic}>{visit.clinic}</ThemedText></View>
+              </View>
+            ))}
+          </View>
+        ) : <ThemedText style={styles.noActivity}>Aún no hay actividad para este filtro.</ThemedText>}
 
         <View style={styles.tip}><MaterialIcons name="lightbulb-outline" size={20} color={Colors.brand.coral} /><ThemedText style={styles.tipText}>Mantener sus vacunas al día ayuda a que vivan más y mejor.</ThemedText></View>
       </ScrollView>
@@ -48,10 +76,11 @@ const styles = StyleSheet.create({
   eyebrow: { color: Colors.brand.coral, fontSize: 11, letterSpacing: 1.7, fontWeight: '800', marginBottom: 7 },
   heading: { color: Colors.brand.ink, fontSize: 30, lineHeight: 36 },
   subtitle: { color: Colors.brand.muted, fontSize: 14, lineHeight: 21, marginTop: 7, maxWidth: 290 },
-  filterRow: { flexDirection: 'row', gap: 10, marginTop: 25, marginBottom: 24 },
-  filterActive: { backgroundColor: Colors.brand.blue, borderRadius: 11, paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 6 },
-  filterActiveText: { color: Colors.brand.white, fontSize: 13, fontWeight: '700' },
+  filterRow: { marginTop: 25, marginBottom: 24, gap: 10 },
+  filterScroll: { gap: 10 },
+  filterActive: { backgroundColor: Colors.brand.blue },
   filter: { backgroundColor: Colors.brand.white, borderRadius: 11, paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 6, borderWidth: 1, borderColor: Colors.brand.line },
+  filterActiveText: { color: Colors.brand.white, fontSize: 13, fontWeight: '700' },
   filterText: { color: Colors.brand.blue, fontSize: 13, fontWeight: '700' },
   nextCard: { backgroundColor: Colors.brand.softCoral, borderRadius: 18, padding: 16, flexDirection: 'row', alignItems: 'center', marginBottom: 31 },
   nextIcon: { width: 43, height: 43, borderRadius: 13, backgroundColor: Colors.brand.white, justifyContent: 'center', alignItems: 'center' },
@@ -59,6 +88,8 @@ const styles = StyleSheet.create({
   nextLabel: { color: Colors.brand.coral, fontSize: 9, letterSpacing: 1.2, fontWeight: '800' },
   nextTitle: { color: Colors.brand.ink, fontSize: 14, marginTop: 4 },
   nextDate: { color: Colors.brand.muted, fontSize: 11, marginTop: 3 },
+  emptyCard: { backgroundColor: Colors.brand.white, borderRadius: 18, padding: 18, flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 31 },
+  emptyText: { color: Colors.brand.muted, fontSize: 12, flex: 1 },
   sectionTitle: { color: Colors.brand.ink, fontSize: 20, marginBottom: 19 },
   timeline: { backgroundColor: Colors.brand.white, borderRadius: 20, padding: 18, paddingBottom: 5 },
   visitRow: { flexDirection: 'row', minHeight: 75 },
@@ -71,6 +102,7 @@ const styles = StyleSheet.create({
   visitCopy: { flex: 1, paddingLeft: 12, paddingTop: 1 },
   visitTitle: { color: Colors.brand.ink, fontSize: 14 },
   visitClinic: { color: Colors.brand.muted, fontSize: 12, marginTop: 5 },
+  noActivity: { color: Colors.brand.muted, fontSize: 13, paddingVertical: 8 },
   tip: { marginTop: 18, backgroundColor: Colors.brand.softBlue, borderRadius: 15, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10 },
   tipText: { flex: 1, color: Colors.brand.blue, fontSize: 12, lineHeight: 18 },
 });
