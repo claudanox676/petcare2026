@@ -17,6 +17,7 @@ import { usePetcare, type Pet } from '@/contexts/petcare-context';
 export default function HomeScreen() {
   const { width } = useWindowDimensions();
   const { pets, selectedPet, setSelectedPet, addPet, updatePet } = usePetcare();
+  const nextVisit = selectedPet.visits[0];
   const [isEditing, setIsEditing] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [isVetOpen, setIsVetOpen] = useState(false);
@@ -160,7 +161,9 @@ export default function HomeScreen() {
           <View style={styles.vetIcon}><MaterialIcons name="medical-services" size={22} color={Colors.brand.coral} /></View>
           <View style={styles.vetCopy}>
             <ThemedText type="defaultSemiBold" style={styles.vetTitle}>Ficha veterinaria</ThemedText>
-            <ThemedText style={styles.vetDescription}>Próxima revisión · 12 oct 2026</ThemedText>
+            <ThemedText style={styles.vetDescription}>
+              {nextVisit ? `Próxima revisión · ${nextVisit.date} ${nextVisit.year}` : 'Sin revisiones programadas'}
+            </ThemedText>
           </View>
           <MaterialIcons name="chevron-right" size={22} color={Colors.brand.muted} />
         </Pressable>
@@ -195,8 +198,8 @@ export default function HomeScreen() {
             <View style={styles.vetModalIcon}><MaterialIcons name="medical-services" size={27} color={Colors.brand.coral} /></View>
             <ThemedText type="subtitle" style={styles.modalTitle}>Ficha veterinaria</ThemedText>
             <ThemedText style={styles.vetModalPet}>{selectedPet.name} · {selectedPet.id}</ThemedText>
-            <View style={styles.vetDetailRow}><ThemedText style={styles.vetDetailLabel}>Clínica</ThemedText><ThemedText style={styles.vetDetailValue}>Clínica Vet Salud</ThemedText></View>
-            <View style={styles.vetDetailRow}><ThemedText style={styles.vetDetailLabel}>Próxima revisión</ThemedText><ThemedText style={styles.vetDetailValue}>12 oct 2026 · 10:30</ThemedText></View>
+            <View style={styles.vetDetailRow}><ThemedText style={styles.vetDetailLabel}>Clínica</ThemedText><ThemedText style={styles.vetDetailValue}>{nextVisit?.clinic ?? 'Sin clínica registrada'}</ThemedText></View>
+            <View style={styles.vetDetailRow}><ThemedText style={styles.vetDetailLabel}>Próxima revisión</ThemedText><ThemedText style={styles.vetDetailValue}>{nextVisit ? `${nextVisit.date} ${nextVisit.year} · 10:30` : 'Sin revisión programada'}</ThemedText></View>
             <View style={styles.vetDetailRow}><ThemedText style={styles.vetDetailLabel}>Veterinaria</ThemedText><ThemedText style={styles.vetDetailValue}>Dra. Ana Torres</ThemedText></View>
             <Pressable onPress={() => setIsVetOpen(false)} style={styles.saveButton}><ThemedText style={styles.saveText}>Cerrar</ThemedText></Pressable>
           </View>
