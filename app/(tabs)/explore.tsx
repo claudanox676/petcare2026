@@ -18,10 +18,6 @@ export default function HistoryScreen() {
         <ThemedText type="title" style={styles.heading}>Historial</ThemedText>
         <ThemedText style={styles.subtitle}>Todo lo importante de tus mascotas, en un solo lugar.</ThemedText>
 
-        <View style={styles.filterRow}>
-          <View style={styles.filterActive}><ThemedText style={styles.filterActiveText}>Luna</ThemedText><MaterialIcons name="keyboard-arrow-down" size={17} color={Colors.brand.white} /></View>
-          <View style={styles.filter}><ThemedText style={styles.filterText}>2026</ThemedText><MaterialIcons name="keyboard-arrow-down" size={17} color={Colors.brand.blue} /></View>
-        </View>
 
         <View style={styles.nextCard}>
           <View style={styles.nextIcon}><MaterialIcons name="event" size={23} color={Colors.brand.coral} /></View>
