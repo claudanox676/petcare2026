@@ -76,7 +76,7 @@ export default function HomeScreen() {
           <View>
             <ThemedText style={styles.eyebrow}>PETCARE CLUB</ThemedText>
             <ThemedText type="title" style={styles.heading}>
-              Hola, Claudia <ThemedText style={styles.wave}>✦</ThemedText>
+              Hola, Claudio <ThemedText style={styles.wave}>✦</ThemedText>
             </ThemedText>
           </View>
           <View accessibilityLabel="Notificaciones" accessibilityRole="image" style={styles.iconButton}>
