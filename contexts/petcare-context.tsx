@@ -46,6 +46,7 @@ type PetcareContextValue = {
   setSelectedPet: (pet: Pet) => void;
   addPet: (pet: Pet) => void;
   updatePet: (pet: Pet) => void;
+  deletePet: (id: string) => void;
 };
 
 const PetcareContext = createContext<PetcareContextValue | null>(null);
@@ -67,6 +68,30 @@ export function PetcareProvider({ children }: { children: ReactNode }) {
       setPets((currentPets) => currentPets.map((currentPet) => currentPet.id === pet.id ? pet : currentPet));
       setSelectedId(pet.id);
     },
+    deletePet: (id) => {
+  const mascotasRestantes = pets.filter(
+    (pet) => pet.id !== id
+  );
+
+  // Evitar dejar la lista vacía o eliminar un ID inexistente.
+  if (
+    mascotasRestantes.length === 0 ||
+    mascotasRestantes.length === pets.length
+  ) {
+    return;
+  }
+
+  // Mantuvimos el código que hizo Matías.
+  setPets((currentPets) =>
+    currentPets.filter((currentPet) => currentPet.id !== id)
+  );
+
+  // Si borramos la mascota seleccionada,
+  // seleccionamos otra automáticamente.
+  if (selectedId === id) {
+    setSelectedId(mascotasRestantes[0].id);
+  }
+},
   }), [pets, selectedPet]);
 
   return <PetcareContext.Provider value={value}>{children}</PetcareContext.Provider>;

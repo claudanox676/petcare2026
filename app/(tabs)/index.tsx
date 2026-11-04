@@ -16,10 +16,11 @@ import { usePetcare, type Pet } from '@/contexts/petcare-context';
 
 export default function HomeScreen() {
   const { width } = useWindowDimensions();
-  const { pets, selectedPet, setSelectedPet, addPet, updatePet } = usePetcare();
+  const { pets, selectedPet, setSelectedPet, addPet, updatePet, deletePet } = usePetcare();
   const [isEditing, setIsEditing] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
   const [isVetOpen, setIsVetOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [draft, setDraft] = useState(selectedPet);
 
   const openEditor = () => {
@@ -44,7 +45,12 @@ export default function HomeScreen() {
   };
 
   const openAddPet = () => {
-    const id = `PC-${String(pets.length + 1).padStart(3, '0')}`;
+    // Evitamos repetir IDs aunque se hayan eliminado mascotas antes.
+    const highestId = Math.max(
+      0,
+      ...pets.map((pet) => Number(pet.id.replace('PC-', '')) || 0)
+    );
+    const id = `PC-${String(highestId + 1).padStart(3, '0')}`;
     setDraft({
       id,
       name: '',
@@ -132,10 +138,29 @@ export default function HomeScreen() {
             <ThemedText type="subtitle" style={styles.sectionTitle}>Ficha de {selectedPet.name}</ThemedText>
             <ThemedText style={styles.sectionCaption}>Información para su cuidado diario</ThemedText>
           </View>
-          <Pressable accessibilityRole="button" accessibilityLabel={`Editar ficha de ${selectedPet.name}`} onPress={openEditor} style={styles.editButton}>
-            <MaterialIcons name="edit" size={17} color={Colors.brand.blue} />
-            <ThemedText style={styles.editLabel}>Editar</ThemedText>
-          </Pressable>
+          <View style={styles.headerActions}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Editar ficha de ${selectedPet.name}`}
+              onPress={openEditor}
+              style={styles.editButton}
+            >
+              <MaterialIcons name="edit" size={17} color={Colors.brand.blue} />
+              <ThemedText style={styles.editLabel}>Editar</ThemedText>
+            </Pressable>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Eliminar mascota ${selectedPet.name} con ID ${selectedPet.id}`}
+              accessibilityState={{ disabled: pets.length <= 1 }}
+              disabled={pets.length <= 1}
+              onPress={() => setIsDeleteOpen(true)}
+              style={[styles.editButton, pets.length <= 1 && styles.disabledButton]}
+            >
+              <MaterialIcons name="delete-outline" size={19} color={Colors.brand.coral} />
+              <ThemedText style={styles.deleteLabel}>Eliminar</ThemedText>
+            </Pressable>
+          </View>
         </View>
 
         <View style={styles.infoCard}>
@@ -185,6 +210,45 @@ export default function HomeScreen() {
             <Pressable onPress={savePet} style={styles.saveButton}>
               <ThemedText style={styles.saveText}>{isAdding ? 'Agregar mascota' : 'Guardar cambios'}</ThemedText>
             </Pressable>
+          </View>
+        </View>
+      </Modal>
+
+      {/* CONFIRMACIÓN DE ELIMINACIÓN (funciona también en web) */}
+      <Modal
+        animationType="fade"
+        transparent
+        visible={isDeleteOpen}
+        onRequestClose={() => setIsDeleteOpen(false)}
+      >
+        <View style={styles.deleteBackdrop}>
+          <View style={styles.deleteDialog}>
+            <ThemedText type="subtitle" style={styles.deleteTitle}>
+              ¿Eliminar a {selectedPet.name}?
+            </ThemedText>
+            <ThemedText style={styles.deleteDescription}>
+              Se eliminará la mascota con ID {selectedPet.id} de la lista temporal.
+            </ThemedText>
+
+            <View style={styles.deleteActions}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setIsDeleteOpen(false)}
+                style={styles.cancelDeleteButton}
+              >
+                <ThemedText style={styles.cancelActionText}>Cancelar</ThemedText>
+              </Pressable>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => {
+                  deletePet(selectedPet.id);
+                  setIsDeleteOpen(false);
+                }}
+                style={styles.confirmDeleteButton}
+              >
+                <ThemedText style={styles.deleteActionText}>Sí, eliminar</ThemedText>
+              </Pressable>
+            </View>
           </View>
         </View>
       </Modal>
@@ -244,8 +308,11 @@ const styles = StyleSheet.create({
   petType: { color: Colors.brand.blue, fontSize: 11, fontWeight: '700', marginBottom: 9 },
   petDetail: { color: Colors.brand.muted, fontSize: 12 },
   selectedMark: { position: 'absolute', right: 12, top: 12, backgroundColor: Colors.brand.coral, width: 20, height: 20, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  headerActions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   editButton: { flexDirection: 'row', alignItems: 'center', gap: 5, padding: 5 },
   editLabel: { color: Colors.brand.blue, fontSize: 13, fontWeight: '700' },
+  deleteLabel: { color: Colors.brand.coral, fontSize: 13, fontWeight: '700' },
+  disabledButton: { opacity: 0.35 },
   infoCard: { backgroundColor: Colors.brand.white, borderRadius: 20, padding: 18, marginBottom: 14, shadowColor: Colors.brand.ink, shadowOpacity: 0.05, shadowRadius: 10, elevation: 2 },
   infoTop: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
   miniAvatar: { width: 48, height: 48, borderRadius: 15, justifyContent: 'center', alignItems: 'center' },
@@ -265,6 +332,15 @@ const styles = StyleSheet.create({
   vetTitle: { color: Colors.brand.ink, fontSize: 14 },
   vetDescription: { color: Colors.brand.muted, fontSize: 12, marginTop: 4 },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(20, 47, 57, 0.42)', justifyContent: 'flex-end' },
+  deleteBackdrop: { flex: 1, backgroundColor: 'rgba(20, 47, 57, 0.42)', justifyContent: 'center', alignItems: 'center' },
+  deleteDialog: { width: '90%', maxWidth: 410, borderRadius: 20, padding: 24, backgroundColor: Colors.brand.white },
+  deleteTitle: { color: Colors.brand.ink, fontSize: 19, marginBottom: 10 },
+  deleteDescription: { color: Colors.brand.muted, fontSize: 13, lineHeight: 20 },
+  deleteActions: { flexDirection: 'row', gap: 12, marginTop: 24 },
+  cancelDeleteButton: { flex: 1, backgroundColor: Colors.brand.background, borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
+  confirmDeleteButton: { flex: 1, backgroundColor: Colors.brand.coral, borderRadius: 12, paddingVertical: 13, alignItems: 'center' },
+  cancelActionText: { color: Colors.brand.ink, fontWeight: '700' },
+  deleteActionText: { color: Colors.brand.white, fontWeight: '700' },
   modalCard: { backgroundColor: Colors.brand.background, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, paddingBottom: 34 },
   vetModalCard: { backgroundColor: Colors.brand.background, borderRadius: 24, margin: 24, padding: 24 },
   vetModalIcon: { width: 52, height: 52, borderRadius: 16, backgroundColor: Colors.brand.softCoral, justifyContent: 'center', alignItems: 'center', marginBottom: 15 },
